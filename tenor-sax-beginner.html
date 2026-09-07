@@ -12,11 +12,134 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="sax-icon.svg" />
 <title>Tenor Saxophone Beginner Studio</title>
-</head>
+<style>
+:root{--bg:#0f1419;--panel:#1a2330;--panel2:#243044;--ink:#e8eef6;--muted:#93a4b8;--accent:#1e88e5;--accent2:#ffb300;--line:#314158}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif}
+body{padding-bottom:env(safe-area-inset-bottom)}
+header{padding:calc(12px + env(safe-area-inset-top)) 24px 8px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#132033,#1e3a5f)}
+h1{margin:0;font-size:1.45rem}.badge{display:inline-block;background:var(--accent);color:#fff;font-size:.72rem;padding:2px 8px;border-radius:999px;margin-left:8px}
+header p{margin:6px 0 0;color:var(--muted);font-size:.92rem}
+main{display:grid;grid-template-columns:340px 1fr;gap:16px;padding:16px;max-width:1400px;margin:0 auto}
+@media(max-width:980px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card h2{margin:0 0 10px;font-size:1.05rem}
+label{display:block;font-size:.78rem;color:var(--muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+select,input[type=number],input[type=text]{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.95rem}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:600}
+button.secondary{background:var(--panel2);border:1px solid var(--line)}
+.note-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+.note-btn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 4px;cursor:pointer;font-size:.78rem}
+.note-btn.active{background:var(--accent);border-color:var(--accent)}
+.diagram-wrap{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:360px}
+.staff-box{background:#f7f4ea;color:#111;border-radius:12px;padding:12px 16px;min-width:180px}
+.written{font-weight:700;font-size:1.1rem;color:#1565c0}.concert{font-size:.85rem;color:#555;margin-top:4px}
+.legend,.hint{font-size:.85rem;color:var(--muted);line-height:1.45}
+.bpm-row{display:grid;grid-template-columns:80px 1fr 70px;gap:10px;align-items:center}
+.seq{display:flex;flex-wrap:wrap;gap:6px;min-height:42px}
+.seq span{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.85rem}
+.seq span.on{background:var(--accent2);color:#111;font-weight:700}
+table.info{width:100%;border-collapse:collapse;font-size:.85rem}
+table.info td,table.info th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}.tabs button{background:var(--panel2)}.tabs button.active{background:var(--accent)}
+.hidden{display:none}footer{text-align:center;color:var(--muted);font-size:.8rem;padding:8px 16px 24px}
+</style></head>
 <body>
-<p>Loading studio… <a href="./tenor-sax-beginner.html">reload</a></p>
+<header>
+<h1>Tenor Saxophone Beginner Studio <span class="badge">Bb transposing</span></h1>
+<p>Written-pitch scales, modes, and arpeggios · interactive fingering diagrams · adjustable MIDI-style player</p>
+<p class="hint">On iPhone: open this page in Safari → Share → Add to Home Screen.</p>
+</header>
+<main>
+<section class="card">
+<h2>Fingering chart</h2>
+<label>Register</label>
+<div class="row">
+<button class="secondary" id="regLow">Low</button>
+<button class="secondary" id="regMid">Middle</button>
+<button class="secondary" id="regHigh">High</button>
+</div>
+<label>Select a written note</label>
+<div class="note-grid" id="noteGrid"></div>
+<p class="legend">Filled black keys = pressed. Open outlines = not pressed.</p>
+<p class="hint" id="fingHint"></p>
+</section>
+<section>
+<div class="card" style="margin-bottom:16px">
+<div class="diagram-wrap">
+<div id="saxSvg"></div>
+<div class="staff-box">
+<div class="written" id="noteTitle">LOW G♯</div>
+<svg id="staffSvg" width="200" height="110" viewBox="0 0 200 110"></svg>
+<div class="concert" id="concertLabel">Concert pitch</div>
+<div class="hint" id="octaveHint" style="color:#444;margin-top:6px"></div>
+</div></div></div>
+<div class="card" style="margin-bottom:16px">
+<h2>Practice player (written tenor pitch)</h2>
+<div class="tabs">
+<button class="active" data-tab="scales">Scales</button>
+<button data-tab="modes">Modes</button>
+<button data-tab="chords">Chord tones</button>
+<button data-tab="custom">Custom</button>
+</div>
+<div id="tab-scales"><div class="row"><div style="flex:1;min-width:140px"><label>Written tonic</label><select id="scaleTonic"></select></div><div style="flex:1;min-width:160px"><label>Scale type</label><select id="scaleType"><option value="major">Major</option><option value="naturalMinor">Natural minor</option><option value="harmonicMinor">Harmonic minor</option><option value="melodicMinor">Melodic minor (asc.)</option><option value="majorPent">Major pentatonic</option><option value="minorPent">Minor pentatonic</option><option value="blues">Blues</option><option value="chromatic">Chromatic</option></select></div></div></div>
+<div id="tab-modes" class="hidden"><div class="row"><div style="flex:1;min-width:140px"><label>Written tonic</label><select id="modeTonic"></select></div><div style="flex:1;min-width:160px"><label>Mode</label><select id="modeType"><option value="ionian">Ionian (major)</option><option value="dorian">Dorian</option><option value="phrygian">Phrygian</option><option value="lydian">Lydian</option><option value="mixolydian">Mixolydian</option><option value="aeolian">Aeolian (natural minor)</option><option value="locrian">Locrian</option></select></div></div></div>
+<div id="tab-chords" class="hidden"><div class="row"><div style="flex:1;min-width:140px"><label>Written root</label><select id="chordRoot"></select></div><div style="flex:1;min-width:160px"><label>Quality</label><select id="chordType"><option value="maj">Major triad</option><option value="min">Minor triad</option><option value="dim">Diminished triad</option><option value="aug">Augmented triad</option><option value="maj7">Major 7</option><option value="dom7">Dominant 7</option><option value="min7">Minor 7</option><option value="halfdim">Half-diminished</option><option value="dim7">Fully diminished 7</option><option value="sus4">Sus4</option></select></div></div></div>
+<div id="tab-custom" class="hidden"><label>Written notes (e.g. G4 A4 B4 C5)</label><input type="text" id="customNotes" value="G4 A4 B4 C5 D5 E5 F#5 G5"></div>
+<div class="row" style="margin-top:10px">
+<label style="margin:0;display:flex;gap:6px;text-transform:none;letter-spacing:0;color:var(--ink)"><input type="checkbox" id="loopCheck" checked> Loop</label>
+<label style="margin:0;display:flex;gap:6px;text-transform:none;letter-spacing:0;color:var(--ink)"><input type="checkbox" id="downCheck" checked> Play descending too</label>
+<label style="margin:0;display:flex;gap:6px;text-transform:none;letter-spacing:0;color:var(--ink)"><input type="checkbox" id="followFingering" checked> Follow fingering</label>
+</div>
+<div style="margin-top:12px">
+<div class="bpm-row"><label style="margin:0">BPM</label><input type="range" id="bpmSlider" min="40" max="200" value="80"><input type="number" id="bpmBox" min="40" max="200" value="80"></div>
+<div class="row" style="margin-top:8px"><button id="playBtn">Play</button><button class="secondary" id="stopBtn">Stop</button><button class="secondary" id="loadBtn">Load pattern</button></div>
+<div class="seq" id="seqView"></div>
+<p class="hint" id="patternInfo"></p>
+</div></div>
+<div class="card"><h2>Tenor transposition cheat sheet</h2>
+<p class="hint">Tenor sax is in Bb. Written notes sound a major 9th lower. Concert C → written D.</p>
+<table class="info"><tr><th>Concert</th><th>Written tenor</th></tr>
+<tr><td>Bb major</td><td>C major</td></tr><tr><td>Eb major</td><td>F major</td></tr>
+<tr><td>F major</td><td>G major</td></tr><tr><td>C major</td><td>D major</td></tr><tr><td>G major</td><td>A major</td></tr></table>
+</div></section></main>
+<footer>Fingerings: written low Bb through high F#. Player uses written-pitch synthesized tones.</footer>
 <script>
-/* placeholder replaced next */
-</script>
-</body>
-</html>
+const NOTES=[{id:'Bb2',name:'Low Bb',pc:10,oct:2,midi:46,reg:'low'},{id:'B2',name:'Low B',pc:11,oct:2,midi:47,reg:'low'},{id:'C3',name:'Low C',pc:0,oct:3,midi:48,reg:'low'},{id:'Cs3',name:'Low C#',pc:1,oct:3,midi:49,reg:'low'},{id:'D3',name:'Low D',pc:2,oct:3,midi:50,reg:'low'},{id:'Eb3',name:'Low Eb',pc:3,oct:3,midi:51,reg:'low'},{id:'E3',name:'Low E',pc:4,oct:3,midi:52,reg:'low'},{id:'F3',name:'Low F',pc:5,oct:3,midi:53,reg:'low'},{id:'Fs3',name:'Low F#',pc:6,oct:3,midi:54,reg:'low'},{id:'G3',name:'Low G',pc:7,oct:3,midi:55,reg:'low'},{id:'Gs3',name:'Low G#',pc:8,oct:3,midi:56,reg:'low'},{id:'A3',name:'Low A',pc:9,oct:3,midi:57,reg:'low'},{id:'Bb3',name:'Middle Bb',pc:10,oct:3,midi:58,reg:'mid'},{id:'B3',name:'Middle B',pc:11,oct:3,midi:59,reg:'mid'},{id:'C4',name:'Middle C',pc:0,oct:4,midi:60,reg:'mid'},{id:'Cs4',name:'Middle C#',pc:1,oct:4,midi:61,reg:'mid'},{id:'D4',name:'Middle D',pc:2,oct:4,midi:62,reg:'mid'},{id:'Eb4',name:'Middle Eb',pc:3,oct:4,midi:63,reg:'mid'},{id:'E4',name:'Middle E',pc:4,oct:4,midi:64,reg:'mid'},{id:'F4',name:'Middle F',pc:5,oct:4,midi:65,reg:'mid'},{id:'Fs4',name:'Middle F#',pc:6,oct:4,midi:66,reg:'mid'},{id:'G4',name:'Middle G',pc:7,oct:4,midi:67,reg:'mid'},{id:'Gs4',name:'Middle G#',pc:8,oct:4,midi:68,reg:'mid'},{id:'A4',name:'Middle A',pc:9,oct:4,midi:69,reg:'mid'},{id:'Bb4',name:'High Bb',pc:10,oct:4,midi:70,reg:'high'},{id:'B4',name:'High B',pc:11,oct:4,midi:71,reg:'high'},{id:'C5',name:'High C',pc:0,oct:5,midi:72,reg:'high'},{id:'Cs5',name:'High C#',pc:1,oct:5,midi:73,reg:'high'},{id:'D5',name:'High D',pc:2,oct:5,midi:74,reg:'high'},{id:'Eb5',name:'High Eb',pc:3,oct:5,midi:75,reg:'high'},{id:'E5',name:'High E',pc:4,oct:5,midi:76,reg:'high'},{id:'F5',name:'High F',pc:5,oct:5,midi:77,reg:'high'},{id:'Fs5',name:'High F#',pc:6,oct:5,midi:78,reg:'high'}];
+const PC_NAMES=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
+function keysFor(id){const base={Bb2:['L1','L2','L3','R1','R2','R3','Eb','C','Bb'],B2:['L1','L2','L3','R1','R2','R3','Eb','C','B'],C3:['L1','L2','L3','R1','R2','R3','Eb','C'],Cs3:['L1','L2','L3','R1','R2','R3','Eb','C','Cs'],D3:['L1','L2','L3','R1','R2','R3'],Eb3:['L1','L2','L3','R1','R2','R3','Eb'],E3:['L1','L2','L3','R1','R2'],F3:['L1','L2','L3','R1'],Fs3:['L1','L2','L3','R1','R2','Fs'],G3:['L1','L2','L3'],Gs3:['L1','L2','L3','Gs'],A3:['L1','L2'],Bb3:['L1','bis'],B3:['L1'],C4:['L2'],Cs4:[],D4:['oct','L1','L2','L3','R1','R2','R3'],Eb4:['oct','L1','L2','L3','R1','R2','R3','Eb'],E4:['oct','L1','L2','L3','R1','R2'],F4:['oct','L1','L2','L3','R1'],Fs4:['oct','L1','L2','L3','R1','R2','Fs'],G4:['oct','L1','L2','L3'],Gs4:['oct','L1','L2','L3','Gs'],A4:['oct','L1','L2'],Bb4:['oct','L1','bis'],B4:['oct','L1'],C5:['oct','L2'],Cs5:['oct'],D5:['oct','palmD'],Eb5:['oct','palmD','palmEb'],E5:['oct','palmD','palmEb','palmF'],F5:['oct','palmD','palmEb','palmF','frontF'],Fs5:['oct','palmD','palmEb','palmF','frontF','sideE']};return base[id]||[]}
+const HINTS={Gs3:'Left hand 1-2-3 + left pinky G#. Matches the example diagram.',Cs4:'Open — no keys.',Cs5:'Octave key only.'};
+function drawSax(pressed){const P=new Set(pressed);const f=id=>P.has(id)?'#111':'#fff';const s='#111';return `<svg width="220" height="360" viewBox="0 0 220 360" xmlns="http://www.w3.org/2000/svg"><text x="110" y="22" text-anchor="middle" font-size="16" font-weight="700" fill="#1e88e5">KEYS</text><ellipse cx="42" cy="70" rx="14" ry="22" fill="${f('palmF')}" stroke="${s}" stroke-width="2"/><ellipse cx="28" cy="108" rx="13" ry="20" fill="${f('palmEb')}" stroke="${s}" stroke-width="2"/><ellipse cx="48" cy="130" rx="12" ry="20" fill="${f('palmD')}" stroke="${s}" stroke-width="2"/><ellipse cx="78" cy="58" rx="10" ry="16" fill="${f('frontF')}" stroke="${s}" stroke-width="2"/><path d="M92 48 c8 -16 28 -16 34 -2 c4 10 -2 18 -14 20 c-12 2 -24 -4 -20 -18z" fill="${f('oct')}" stroke="${s}" stroke-width="2"/><circle cx="96" cy="92" r="14" fill="${f('L1')}" stroke="${s}" stroke-width="2"/><circle cx="96" cy="128" r="14" fill="${f('L2')}" stroke="${s}" stroke-width="2"/><circle cx="88" cy="164" r="14" fill="${f('L3')}" stroke="${s}" stroke-width="2"/><ellipse cx="122" cy="108" rx="7" ry="11" fill="${f('bis')}" stroke="${s}" stroke-width="2"/><g transform="translate(36,186)"><ellipse cx="28" cy="16" rx="26" ry="16" fill="${f('Gs')}" stroke="${s}" stroke-width="2"/><path d="M4 28 h48 v18 h-18 v14 h-12 v-14 h-18z" fill="${f('Cs')}" stroke="${s}" stroke-width="2"/><path d="M34 46 h18 v28 a16 12 0 0 1 -18 0z" fill="${f('B')}" stroke="${s}" stroke-width="2"/><path d="M4 46 h18 v28 a16 12 0 0 0 -18 0z" fill="${f('Bb')}" stroke="${s}" stroke-width="2"/></g><g transform="translate(148,150)"><rect x="0" y="0" width="16" height="22" rx="8" fill="${f('sideE')}" stroke="${s}" stroke-width="2"/><rect x="0" y="24" width="16" height="22" rx="8" fill="${f('sideC')}" stroke="${s}" stroke-width="2"/><rect x="0" y="48" width="16" height="22" rx="8" fill="${f('sideBb')}" stroke="${s}" stroke-width="2"/></g><circle cx="108" cy="236" r="13" fill="${f('R1')}" stroke="${s}" stroke-width="2"/><circle cx="100" cy="268" r="12" fill="${f('R2')}" stroke="${s}" stroke-width="2"/><circle cx="118" cy="292" r="13" fill="${f('R3')}" stroke="${s}" stroke-width="2"/><ellipse cx="138" cy="250" rx="8" ry="12" fill="${f('Fs')}" stroke="${s}" stroke-width="2"/><g transform="translate(92,310)"><path d="M0 8 h36 a16 14 0 0 1 0 20 h-36 a16 14 0 0 1 0 -20z" fill="${f('Eb')}" stroke="${s}" stroke-width="2"/><path d="M6 28 h24 a14 12 0 0 1 0 16 h-24 a14 12 0 0 1 0 -16z" fill="${f('C')}" stroke="${s}" stroke-width="2"/></g></svg>`}
+function staffY(midi){const pc=midi%12;const oct=Math.floor(midi/12)-1;const letterMap={0:0,1:0,2:1,3:1,4:2,5:3,6:3,7:4,8:4,9:5,10:5,11:6};const steps=letterMap[pc]+(oct-4)*7;return 82-steps*5}
+function drawStaff(note){const y=staffY(note.midi);const acc=[1,3,6,8,10].includes(note.pc);const accSym=[1,6,8].includes(note.pc)?'#':([3,10].includes(note.pc)?'b':'');let ledgers='';if(note.midi<=60)ledgers+=`<line x1="78" y1="82" x2="122" y2="82" stroke="#111" stroke-width="1.4"/>`;return `<line x1="30" y1="50" x2="190" y2="50" stroke="#111" stroke-width="1.3"/><line x1="30" y1="60" x2="190" y2="60" stroke="#111" stroke-width="1.3"/><line x1="30" y1="70" x2="190" y2="70" stroke="#111" stroke-width="1.3"/><line x1="30" y1="80" x2="190" y2="80" stroke="#111" stroke-width="1.3"/><line x1="30" y1="90" x2="190" y2="90" stroke="#111" stroke-width="1.3"/><text x="34" y="86" font-size="44" font-family="Georgia,serif">𝄞</text>${ledgers}${acc?`<text x="72" y="${y+6}" font-size="20">${accSym}</text>`:''}<ellipse cx="100" cy="${y}" rx="9" ry="7" fill="#111" transform="rotate(-20 100 ${y})"/><line x1="108" y1="${y}" x2="108" y2="${y-28}" stroke="#111" stroke-width="1.6"/>`}
+function concertName(note){const cpc=(note.pc+10)%12;return PC_NAMES[cpc]+(note.oct-1)+' (major 9th below written)'}
+let currentNote=NOTES.find(n=>n.id==='Gs3');
+function renderNote(note){currentNote=note;document.getElementById('saxSvg').innerHTML=drawSax(keysFor(note.id));document.getElementById('noteTitle').textContent=note.name.toUpperCase();document.getElementById('staffSvg').innerHTML=drawStaff(note);document.getElementById('concertLabel').textContent='Concert pitch: '+concertName(note);document.getElementById('octaveHint').textContent=(keysFor(note.id).includes('oct')?'Octave key ON':'Octave key OFF');document.getElementById('fingHint').textContent=HINTS[note.id]||'';document.querySelectorAll('.note-btn').forEach(b=>b.classList.toggle('active',b.dataset.id===note.id))}
+function buildGrid(reg){const grid=document.getElementById('noteGrid');grid.innerHTML='';NOTES.filter(n=>n.reg===reg).forEach(n=>{const b=document.createElement('button');b.className='note-btn';b.dataset.id=n.id;b.textContent=n.name.replace('Low ','').replace('Middle ','').replace('High ','');b.onclick=()=>renderNote(n);grid.appendChild(b)})}
+['Low','Mid','High'].forEach(r=>{document.getElementById('reg'+r).onclick=()=>{buildGrid(r.toLowerCase());renderNote(NOTES.find(n=>n.reg===r.toLowerCase()))}});
+const TONICS=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const TONIC_PC={C:0,'C#':1,D:2,Eb:3,E:4,F:5,'F#':6,G:7,Ab:8,A:9,Bb:10,B:11};
+function fillTonics(){['scaleTonic','modeTonic','chordRoot'].forEach(id=>{const s=document.getElementById(id);TONICS.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;if(t==='G')o.selected=true;s.appendChild(o)})})}
+const SCALES={major:[0,2,4,5,7,9,11],naturalMinor:[0,2,3,5,7,8,10],harmonicMinor:[0,2,3,5,7,8,11],melodicMinor:[0,2,3,5,7,9,11],majorPent:[0,2,4,7,9],minorPent:[0,3,5,7,10],blues:[0,3,5,6,7,10],chromatic:[0,1,2,3,4,5,6,7,8,9,10,11],ionian:[0,2,4,5,7,9,11],dorian:[0,2,3,5,7,9,10],phrygian:[0,1,3,5,7,8,10],lydian:[0,2,4,6,7,9,11],mixolydian:[0,2,4,5,7,9,10],aeolian:[0,2,3,5,7,8,10],locrian:[0,1,3,5,6,8,10]};
+const CHORDS={maj:[0,4,7],min:[0,3,7],dim:[0,3,6],aug:[0,4,8],maj7:[0,4,7,11],dom7:[0,4,7,10],min7:[0,3,7,10],halfdim:[0,3,6,10],dim7:[0,3,6,9],sus4:[0,5,7]};
+function nearestNote(pc,preferMidi){let best=NOTES[0],d=99;NOTES.forEach(n=>{if(n.pc!==pc)return;const dd=Math.abs(n.midi-preferMidi);if(dd<d){d=dd;best=n}});return best}
+function buildPattern(){const tab=document.querySelector('.tabs button.active').dataset.tab;let intervals,tonic,label;if(tab==='custom'){const raw=document.getElementById('customNotes').value.trim().split(/\s+/);const mapped=raw.map(tok=>{const m=tok.match(/^([A-Ga-g])([#b]?)(\d)$/);if(!m)return null;let pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1].toUpperCase()];if(m[2]==='#')pc=(pc+1)%12;if(m[2]==='b')pc=(pc+11)%12;const midi=(parseInt(m[3],10)+1)*12+pc;return NOTES.find(n=>n.midi===midi)||nearestNote(pc,midi)}).filter(Boolean);return{notes:mapped,label:'Custom'}}if(tab==='scales'){tonic=document.getElementById('scaleTonic').value;intervals=SCALES[document.getElementById('scaleType').value];label=tonic+' '+document.getElementById('scaleType').selectedOptions[0].text}else if(tab==='modes'){tonic=document.getElementById('modeTonic').value;intervals=SCALES[document.getElementById('modeType').value];label=tonic+' '+document.getElementById('modeType').selectedOptions[0].text}else{tonic=document.getElementById('chordRoot').value;intervals=CHORDS[document.getElementById('chordType').value];label=tonic+' '+document.getElementById('chordType').selectedOptions[0].text+' arpeggio'}const tpc=TONIC_PC[tonic];const start=nearestNote(tpc,62);const notes=intervals.map(iv=>nearestNote((tpc+iv)%12,start.midi+iv));for(let i=1;i<notes.length;i++){while(notes[i].midi<notes[i-1].midi){const higher=NOTES.find(n=>n.pc===notes[i].pc&&n.midi>notes[i].midi);if(!higher)break;notes[i]=higher}}if(document.getElementById('downCheck').checked&&notes.length>1)return{notes:notes.concat(notes.slice(0,-1).reverse()),label};return{notes,label}}
+let pattern={notes:[],label:''},playing=false,playTimer=null,step=0,audioCtx=null;
+function midiToFreq(m){return 440*Math.pow(2,(m-69)/12)}
+function beep(midi,dur){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();const t=audioCtx.currentTime;const osc=audioCtx.createOscillator();const filt=audioCtx.createBiquadFilter();const gain=audioCtx.createGain();osc.type='sawtooth';osc.frequency.value=midiToFreq(midi);filt.type='lowpass';filt.frequency.value=1400;gain.gain.setValueAtTime(0.0001,t);gain.gain.exponentialRampToValueAtTime(0.18,t+0.03);gain.gain.exponentialRampToValueAtTime(0.0001,t+dur);osc.connect(filt);filt.connect(gain);gain.connect(audioCtx.destination);osc.start(t);osc.stop(t+dur+0.02)}
+function showSeq(){document.getElementById('seqView').innerHTML=pattern.notes.map((n,i)=>`<span data-i="${i}">${n.name}</span>`).join('');document.getElementById('patternInfo').textContent=pattern.label+' · '+pattern.notes.length+' notes · written tenor pitch'}
+function highlight(i){document.querySelectorAll('#seqView span').forEach(s=>s.classList.toggle('on',Number(s.dataset.i)===i))}
+function tick(){if(!playing||!pattern.notes.length)return;const n=pattern.notes[step];const bpm=Number(document.getElementById('bpmBox').value)||80;const dur=60/bpm;beep(n.midi,dur*0.9);highlight(step);if(document.getElementById('followFingering').checked){buildGrid(n.reg);renderNote(n)}step++;if(step>=pattern.notes.length){if(document.getElementById('loopCheck').checked)step=0;else{stopPlay();return}}playTimer=setTimeout(tick,dur*1000)}
+function startPlay(){if(!pattern.notes.length)loadPattern();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();playing=true;step=0;document.getElementById('playBtn').textContent='Playing…';tick()}
+function stopPlay(){playing=false;clearTimeout(playTimer);document.getElementById('playBtn').textContent='Play';highlight(-1)}
+function loadPattern(){pattern=buildPattern();showSeq()}
+document.getElementById('playBtn').onclick=()=>{if(playing)stopPlay();else startPlay()};
+document.getElementById('stopBtn').onclick=stopPlay;
+document.getElementById('loadBtn').onclick=loadPattern;
+document.querySelectorAll('.tabs button').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');['scales','modes','chords','custom'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));loadPattern()}});
+const slider=document.getElementById('bpmSlider'),box=document.getElementById('bpmBox');
+slider.oninput=()=>box.value=slider.value;box.oninput=()=>slider.value=Math.min(200,Math.max(40,box.value||80));
+['scaleTonic','scaleType','modeTonic','modeType','chordRoot','chordType','customNotes','downCheck'].forEach(id=>document.getElementById(id).onchange=loadPattern);
+fillTonics();buildGrid('low');renderNote(currentNote);loadPattern();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
