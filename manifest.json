@@ -1,0 +1,19 @@
+{
+  "name": "Tenor Saxophone Beginner Studio",
+  "short_name": "Tenor Sax",
+  "description": "Beginner tenor saxophone fingerings, written-pitch scales, modes, arpeggios, and a BPM player.",
+  "start_url": "./tenor-sax-beginner.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1419",
+  "theme_color": "#132033",
+  "icons": [
+    {
+      "src": "sax-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
